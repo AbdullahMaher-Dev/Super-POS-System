@@ -21,17 +21,14 @@ class POS_API:
             self.window.destroy()
         os._exit(0)
 
-    # 🔴 دالة القناص الذكي (بتصطاد الطابعة من جزء من اسمها وتتجاهل المسافات المخفية)
     def set_active_printer(self, printer_type):
         try:
             if printer_type == 'receipt':
                 exact_name = "POSPrinter POS80"
-                keyword = "POS80"  # الكلمة الدلالية
+                keyword = "POS80" 
             else:
                 exact_name = "Xprinter XP-233B"
-                keyword = "233B"   # الكلمة الدلالية
-                
-            # 1. نظام القناص (باورشيل): بيبحث عن أي طابعة تحتوي على الكلمة الدلالية ويجبرها تبقى Default
+                keyword = "233B"  
             ps_script = f"""
             $printers = Get-WmiObject -Query "SELECT * FROM Win32_Printer WHERE Name LIKE '%{keyword}%'"
             if ($printers) {{
@@ -42,15 +39,11 @@ class POS_API:
             }}
             """
             subprocess.run(["powershell", "-NoProfile", "-Command", ps_script], creationflags=0x08000000)
-            
-            # 2. الطريقة المباشرة للتأكيد اللحظي
             ctypes.windll.winspool.SetDefaultPrinterW(exact_name)
-            
             return {"success": True}
         except Exception as e:
             return {"success": False, "error": str(e)}
 
-    # ================= 1. إدارة المنتجات =================
     def get_all_products(self):
         rows = fetch_query("SELECT * FROM products ORDER BY id DESC LIMIT 500")
         return [
@@ -111,8 +104,7 @@ class POS_API:
                 "price_sell": r[7], "qty": r[8]
             }
         return None
-
-    # ================= 2. إدارة المبيعات ================  
+        
     def save_sale(self, customer, mobile, address, city, shipping, discount, total, net_profit, items):
         try:
             local_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -233,7 +225,6 @@ class POS_API:
                 return {"success": False, "error": str(e)}
         return {"success": False, "error": "Cancelled"}
 
-    # ================= 3. الفواتير والمرتجعات =================
     def get_invoices(self):
         rows = fetch_query("SELECT id,date,customer,mobile,total FROM sales ORDER BY id DESC")
         return rows
@@ -321,7 +312,6 @@ class POS_API:
         execute_query("INSERT INTO sales (customer, total, net_profit) VALUES (?,?,?)", (f"Return: {r[1]}", -r[2], -(r[2]-r[3])))
         return {"success": True, "refund": r[2]}
 
-    # ================= 4. الإعدادات والباك أب =================
     def authenticate(self, username, password):
         execute_query("CREATE TABLE IF NOT EXISTS users (role TEXT, username TEXT, password TEXT)")
         users = fetch_query("SELECT * FROM users")
