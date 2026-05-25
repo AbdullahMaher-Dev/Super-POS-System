@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr" data-theme="dark">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Run Store Management System</title>
+    <link id="bs-css" rel="stylesheet" href="css/bootstrap.min.css">
+    <link rel="stylesheet" href="css/all.min.css">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body>
+
+    <div id="loginScreen" class="screen justify-content-center align-items-center active-screen">
+        <div class="card p-5 shadow-lg" style="width: 420px; border-radius: 20px; z-index: 10;">
+            <div class="text-center mb-4">
+                <img src="assets/logo.png" width="140" class="mb-3">
+                <h3 class="run-font" style="color: #2F9CA3 !important;" data-en="RUN LOGIN" data-ar="تسجيل الدخول">RUN LOGIN</h3>
+            </div>
+            <div class="mb-3">
+                <div class="d-flex justify-content-between align-items-end mb-1">
+                    <label class="form-label mb-0" data-en="Username" data-ar="اسم المستخدم">Username</label>
+                    <span class="text-muted" style="font-size: 0.75rem;">( Admin / Moderator )</span>
+                </div>
+                <input type="text" id="username" placeholder="Enter a Username" class="form-control text-center fs-5">
+            </div>
+            <div class="mb-4">
+                <div class="d-flex justify-content-between align-items-end mb-1">
+                    <label class="form-label mb-0" data-en="Password" data-ar="كلمة المرور">Password</label>
+                    <span class="text-muted" style="font-size: 0.75rem;">( Admin / Moderator )</span>
+                </div>
+                <input type="password" id="password" placeholder="Enter a Password" class="form-control text-center fs-5">
+            </div>
+            <button class="btn btn-primary w-100 py-2 fw-bold fs-5" onclick="login()">
+                <i class="fas fa-sign-in-alt me-2"></i> <span data-en="Login (Enter)" data-ar="دخول (Enter)">Login (Enter)</span>
+            </button>
+        </div>
+    </div>
+
+    <div id="mainScreen" class="flex-column screen">
+        <div class="top-navbar">
+            <div class="d-flex align-items-center me-4">
+                <img src="assets/logo.png" width="40" class="me-2 shadow-sm" style="border-radius: 12px;">
+                <h4 class="run-font m-0" style="font-size: 1.6rem; margin-top: 5px !important; color: #2F9CA3 !important; font-style: italic;">RUN STORE</h4>
+            </div>
+            <div class="d-flex gap-2">
+                <button class="nav-btn active" onclick="switchTab('pos', event)">
+                    <i class="fas fa-desktop"></i> <span data-en="POS" data-ar="الكاشير">POS</span>
+                </button>
+                <button class="nav-btn" onclick="switchTab('inventory', event)">
+                    <i class="fas fa-boxes"></i> <span data-en="Inventory" data-ar="المخزن">Inventory</span>
+                </button>
+                <button class="nav-btn admin-only" onclick="switchTab('reports', event)">
+                    <i class="fas fa-chart-line"></i> <span data-en="Reports" data-ar="التقارير">Reports</span>
+                </button>
+                <button class="nav-btn" onclick="switchTab('returns', event)">
+                    <i class="fas fa-undo"></i> <span data-en="Returns" data-ar="المرتجعات">Returns</span>
+                </button>
+                <button class="nav-btn admin-only" onclick="switchTab('invoices', event); loadInvoicesTab();">
+                    <i class="fas fa-file-invoice"></i> <span data-en="Invoices" data-ar="الفواتير">Invoices</span>
+                </button>
+                <button class="nav-btn admin-only" onclick="switchTab('settings', event)">
+                    <i class="fas fa-cog"></i> <span data-en="Profile" data-ar="الملف الشخصي">Profile</span>
+                </button>
+            </div>
+            <div class="ms-auto d-flex gap-2 align-items-center">
+                <button class="nav-btn" onclick="toggleLang()"><i class="fas fa-globe"></i> <span>Ar / En</span></button>
+                <button class="nav-btn" onclick="toggleTheme()" id="themeBtn"><i class="fas fa-moon"></i> <span>Dark</span></button>
+                
+                <button class="nav-btn text-warning fw-bold" onclick="softRefresh()">
+                    <i class="fas fa-sync-alt"></i> <span data-en="Restart System" data-ar="تحديث النظام">Restart System</span>
+                </button>
+
+                <button class="nav-btn text-danger fw-bold" onclick="logout()">
+                    <i class="fas fa-power-off"></i> <span data-en="Logout" data-ar="خروج">Logout</span>
+                </button>
+            </div>
+        </div>
+
+        <div class="flex-grow-1 p-3 overflow-auto">
+
+            <div id="pos" class="tab-content active h-100">
+                <div class="row h-100 g-3">
+                    <div class="col-md-4">
+                        <div class="card p-3 h-100 d-flex flex-column shadow-sm">
+                            <h5 class="fw-bold mb-3 text-center text-primary" data-en="Current Invoice" data-ar="الفاتورة الحالية">Current Invoice</h5>
+                            <input type="text" id="barcodeScan" placeholder="Scan Barcode (Enter)..." class="form-control mb-3 p-3 fw-bold text-center" style="font-size: 1.2rem; border: 2px solid var(--primary);" onkeypress="handleBarcode(event)">
+
+                            <div class="row g-2 mb-2">
+                                <div class="col-6"><input type="text" id="cName" class="form-control" placeholder="Customer Name"></div>
+                                <div class="col-6"><input type="text" id="cMob" class="form-control" placeholder="Mobile"></div>
+                                <div class="col-12"><input type="text" id="cAdd" class="form-control" placeholder="Address"></div>
+                                <div class="col-12">
+                                    <div class="d-flex gap-2">
+                                        <input type="number" id="cGovPrice" class="form-control w-50 fw-bold text-center" placeholder="Manual Shipping" oninput="renderCart()">
+                                        <select id="cGovSelect" class="form-select w-50" onchange="document.getElementById('cGovPrice').value = this.value; renderCart()">
+                                            <option value="0">Select City...</option>
+                                            <option value="80">Cairo - القاهرة (80 EGP)</option>
+                                            <option value="80">Giza - الجيزة (80 EGP)</option>
+                                            <option value="80">New Cities - المدن الجديدة (80 EGP)</option>
+                                            <option value="80">Qalyubia - القليوبية (80 EGP)</option>
+                                            <option value="95">Kafr El Sheikh - كفر الشيخ (95 EGP)</option>
+                                            <option value="95">Dakahlia - الدقهلية (95 EGP)</option>
+                                            <option value="95">Sharqia - الشرقية (95 EGP)</option>
+                                            <option value="95">Damietta - دمياط (95 EGP)</option>
+                                            <option value="95">Beheira - البحيرة (95 EGP)</option>
+                                            <option value="95">Gharbia - الغربية (95 EGP)</option>
+                                            <option value="95">Monufia - المنوفية (95 EGP)</option>
+                                            <option value="95">Alexandria - الاسكندرية (95 EGP)</option>
+                                            <option value="95">Suez - السويس (95 EGP)</option>
+                                            <option value="95">Port Said - بورسعيد (95 EGP)</option>
+                                            <option value="95">Ismailia - الاسماعيلية (95 EGP)</option>
+                                            <option value="105">Minya - المنيا (105 EGP)</option>
+                                            <option value="105">Assiut - اسيوط (105 EGP)</option>
+                                            <option value="105">Luxor - الأقصر (105 EGP)</option>
+                                            <option value="105">Beni Suef - بني سويف (105 EGP)</option>
+                                            <option value="105">Fayoum - الفيوم (105 EGP)</option>
+                                            <option value="105">Qena - قنا (105 EGP)</option>
+                                            <option value="105">Aswan - اسوان (105 EGP)</option>
+                                            <option value="105">Sohag - سوهاج (105 EGP)</option>
+                                            <option value="155">Sharm El Sheikh - شرم الشيخ (155 EGP)</option>
+                                            <option value="155">Hurghada - الغردقة (155 EGP)</option>
+                                            <option value="155">Matrouh - مطروح (155 EGP)</option>
+                                            <option value="155">Red Sea - البحر الاحمر (155 EGP)</option>
+                                            <option value="155">New Valley - الوادي الجديد (155 EGP)</option>
+                                            <option value="155">North Sinai - شمال سينا (155 EGP)</option>
+                                            <option value="155">South Sinai - جنوب سينا (155 EGP)</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="flex-grow-1 overflow-auto border rounded mb-2">
+                                <table class="table-sm m-0">
+                                    <thead class="sticky-top">
+                                        <tr>
+                                            <th class="text-start p-2">Item</th>
+                                            <th class="text-center p-2">Qty</th>
+                                            <th class="text-center p-2">Price</th>
+                                            <th class="text-center p-2">Total</th>
+                                            <th class="text-center p-2">❌</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="cartTable"></tbody>
+                                </table>
+                            </div>
+
+                            <div class="p-2 border-top">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <b data-en="Discount:" data-ar="خصم:">Discount:</b>
+                                    <input type="number" id="cDisc" value="0" class="form-control w-50 text-center" oninput="renderCart()">
+                                </div>
+                                <h2 class="text-success fw-bold text-center mb-3" id="totalAmount">0.00</h2>
+                                <p id="itemsCount" class="text-center fw-bold"></p>
+                                <div class="d-flex gap-2">
+                                    <button class="btn btn-outline-danger w-50" onclick="clearCart()">Clear</button>
+                                    <button class="btn btn-success w-50 fw-bold" onclick="previewReceipt()">Print</button>
+                                </div>
+                                <div id="profitBox" class="admin-only text-center mt-2 fw-bold text-success" style="font-size: 1.1rem;"></div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-8">
+                        <input type="text" class="form-control mb-2" placeholder="Search product..." oninput="searchProducts(this.value)">
+                        <div class="row g-2" id="productsGrid"></div>
+                    </div>
+                </div>
+            </div> 
+
+            <div id="inventory" class="tab-content">
+                <div class="card p-4 mb-3 shadow-sm">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h5 class="fw-bold text-primary m-0"><i class="fas fa-plus-circle me-2"></i> Add New Product</h5>
+                        <button id="invExcelBtn" class="btn btn-success btn-sm fw-bold admin-only" onclick="exportInventoryExcel()"><i class="fas fa-file-excel"></i> Export Inventory</button>
+                    </div>
+                    <div class="row g-3">
+                        <div class="col-md-3"><input type="text" id="aBar" class="form-control" placeholder="Barcode (Optional)"></div>
+                        <div class="col-md-3"><input type="text" id="aBrand" class="form-control" placeholder="Brand Name"></div>
+                        <div class="col-md-2"><input type="text" id="aSize" class="form-control" placeholder="Size (ex: 41, 42)"></div>
+                        <div class="col-md-2"><input type="text" id="aMade" class="form-control" placeholder="Made In"></div>
+                        <div class="col-md-2">
+                            <select id="aType" class="form-select">
+                                <option selected>Mirror</option>
+                                <option>Original</option>
+                                <option>High Copy</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3 admin-only"><input type="number" id="aPw" class="form-control" placeholder="Wholesale Price"></div>
+                        <div class="col-md-3"><input type="number" id="aPs" class="form-control" placeholder="Sell Price"></div>
+                        <div class="col-md-3"><input type="text" id="aQty" class="form-control" placeholder="Qty (ex: 5, 3, 2)"></div>
+                        <div class="col-md-3"><button class="btn btn-primary w-100 fw-bold" onclick="saveProduct()">Save Product</button></div>
+                    </div>
+                </div>
+                <div class="card p-3 shadow-sm">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Barcode</th><th>Brand</th><th>Size</th><th>Type</th><th>Price</th><th>Stock</th><th class="text-center">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="invTable"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div id="reports" class="tab-content">
+                <div class="row mb-4">
+                    <div class="col-md-4">
+                        <div class="card p-4 bg-dark text-white text-center shadow">
+                            <h5>Total Cost</h5><h3 id="sWholesale">0</h3>
+                        </div>
+                        <input type="date" id="repDate" class="form-control mt-2">
+                        <button class="btn btn-primary w-100 mt-2" onclick="loadReportsByDate()">Search Date</button>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card p-4 bg-primary text-white text-center shadow">
+                            <h5>Total Sales</h5><h3 id="sSell">0</h3>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card p-4 bg-success text-white text-center shadow">
+                            <h5>Total Profit</h5><h3 id="sNet">0</h3>
+                        </div>
+                    </div>
+                </div>
+                <div class="card p-3 shadow-sm">
+                    <div class="d-flex gap-2 mb-3">
+                        <select id="repTime" class="form-select w-25">
+                            <option value="today">Today</option>
+                            <option value="month">This Month</option>
+                            <option value="year">This Year</option>
+                            <option value="all">All Time</option>
+                        </select>
+                        <button class="btn btn-primary" onclick="loadReports()"><i class="fas fa-sync"></i> Refresh</button>
+                        <button class="btn btn-success" onclick="exportReports()"><i class="fas fa-file-excel"></i> Export Excel</button>
+                    </div>
+                    <table class="table table-striped">
+                        <thead><tr><th>Date</th><th>Customer</th><th>Mobile</th><th>City</th><th>Total</th><th>Disc</th></tr></thead>
+                        <tbody id="repTable"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div id="invoices" class="tab-content">
+                <div class="card p-3 shadow-sm">
+                    <input type="date" class="form-control mb-2" onchange="filterInvoicesByDate(this.value)">
+                    <input type="text" class="form-control mb-3" placeholder="Search by Invoice # or Mobile..." oninput="searchInvoice(this.value)">
+                    <div class="d-flex gap-2 mb-2">
+                        <button class="btn btn-outline-primary btn-sm" onclick="sortInvoices()">Sort by Date</button>
+                        <button class="btn btn-success btn-sm" onclick="exportInvoicesExcel()"><i class="fas fa-file-excel"></i> Export Excel</button>
+                    </div>
+                    <table class="table">
+                        <thead><tr><th>Invoice</th><th>Date</th><th>Customer</th><th>Mobile</th><th>Total</th><th>Action</th></tr></thead>
+                        <tbody id="invoiceTable"></tbody>
+                    </table>
+                    <div class="d-flex justify-content-between mt-3">
+                        <button class="btn btn-secondary" onclick="prevPage()">Previous</button>
+                        <span id="pageInfo" class="fw-bold"></span>
+                        <button class="btn btn-secondary" onclick="nextPage()">Next</button>
+                    </div>
+                </div>
+            </div>
+
+            <div id="returns" class="tab-content">
+                <div class="card p-5 text-center mx-auto shadow-lg" style="max-width: 650px; margin-top: 50px;">
+                    <h2 class="text-danger fw-bold mb-4"><i class="fas fa-undo-alt me-3"></i> Returns System</h2>
+                    
+                    <div class="mb-4">
+                        <h6 class="text-primary mb-3 fw-bold">Quick Return (Barcode)</h6>
+                        <input type="text" id="retScan" class="form-control form-control-lg text-center mb-3" placeholder="Scan Barcode to Return..." onkeypress="handleReturnBarcode(event)">
+                        <button class="btn btn-danger btn-lg w-100" onclick="processReturn()">Confirm Return</button>
+                    </div>
+                    
+                    <hr class="my-4">
+                    
+                    <div>
+                        <h6 class="text-primary mb-3 fw-bold border-top pt-3">Return by Invoice</h6>
+                        <input type="number" id="retInvoice" placeholder="Enter Invoice ID..." class="form-control form-control-lg text-center mb-3">
+                        <button class="btn btn-dark btn-lg w-100" onclick="loadReturnItems()">Load Invoice</button>
+                        <table class="table mt-3">
+                            <thead><tr><th>Item</th><th>Qty</th><th>Action</th></tr></thead>
+                            <tbody id="returnTable"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div id="settings" class="tab-content">
+                <div class="card p-5 mx-auto shadow-sm mt-4" style="max-width: 600px;">
+                    <h4 class="fw-bold text-primary mb-4"><i class="fas fa-user-cog me-2"></i> Edit Profile & Settings</h4>
+                    <h6 class="text-primary mb-3">Admin Account</h6>
+                    <div class="row g-2 mb-4">
+                        <div class="col-6"><input type="text" id="adminUser" class="form-control" placeholder="New Admin Username"></div>
+                        <div class="col-6"><input type="password" id="adminPass" class="form-control" placeholder="New Admin Password"></div>
+                        <div class="col-12"><button class="btn btn-dark w-100" onclick="updateCreds('admin')">Update Admin Info</button></div>
+                    </div>
+                    <h6 class="text-primary mb-3 border-top pt-3">Cashier (User) Account</h6>
+                    <div class="row g-2">
+                        <div class="col-6"><input type="text" id="cashierUser" class="form-control" placeholder="New User Username"></div>
+                        <div class="col-6"><input type="password" id="cashierPass" class="form-control" placeholder="New User Password"></div>
+                        <div class="col-12"><button class="btn btn-secondary w-100" onclick="updateCreds('user')">Update User Info</button></div>
+                        <button class="btn btn-success w-100 mt-3" onclick="backupDatabase()"><i class="fas fa-database"></i> Backup Database</button>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <div id="receiptModal" class="card shadow-lg no-print" style="display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 320px; z-index: 2000; background: white; border-radius: 15px;">
+        <div id="receiptContent" class="p-3" style="font-family: 'Courier New', Courier, monospace; color: black;">
+            <div class="text-center">
+                <img src="assets/logo_print.png" width="90" class="mb-2">
+                <h4 class="fw-bold mt-1" style="font-family: 'Montserrat', sans-serif; font-style: italic;">RUN STORE</h4>
+                <div style="font-size: 13px; font-weight: bold; margin-bottom: 10px;">
+                    <p id="rDate" class="mb-1"></p>
+                    <p class="mb-0">REC: #<span id="rId"></span></p>
+                </div>
+            </div>
+            <div style="font-size: 14px; border-top: 1px dashed black; border-bottom: 1px dashed black; padding: 5px 0; margin-bottom: 10px;">
+                <p id="rCust" class="mb-1 fw-bold"></p>
+                <p id="rMob" class="mb-1 fw-bold"></p>
+                <p id="rAdd" class="mb-0 fw-bold"></p>
+            </div>
+            <table class="items">
+                <thead><tr><th>ITEM</th><th>QTY</th><th>PRICE</th><th>TOTAL</th></tr></thead>
+                <tbody id="rItems"></tbody>
+            </table>
+            <div class="invoice-summary mt-2"><span>SHIPPING</span><span id="rShip"></span></div>
+            <div class="sum-box"><span>DISCOUNT</span><span id="rDisc"></span></div>
+            <div class="sum-box admin-only"><span>PROFIT</span><span id="rProfit"></span></div>
+            <div class="total-box"><span>TOTAL</span><span id="rTotal"></span></div>
+            <div class="text-center mt-4 fw-bold" style="font-size: 13px;">Thank You For Shopping at Run Store!</div>
+        </div>
+        <button class="btn btn-danger w-100 no-print" style="border-radius: 0 0 15px 15px; font-size: 1.1rem; font-weight: bold; padding: 10px;" onclick="closeReceipt()">❌ Close / إغلاق</button>
+    </div>
+
+    <div id="barcodePrintArea" style="display:none; flex-direction: column; align-items: center; justify-content: center;"></div>
+
+    <script src="js/JsBarcode.all.min.js"></script>
+    <script src="js/script.js"></script>
+</body>
+
+</html>
