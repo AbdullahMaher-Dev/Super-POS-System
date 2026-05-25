@@ -8,7 +8,6 @@ let pyapi = null;
 window.userRole = 'admin';
 let isPrinting = false; 
 
-// 🔴 متغير لتتبع نوع البحث
 window.lastSearchType = 'standard'; 
 
 window.addEventListener('pywebviewready', function () {
@@ -22,16 +21,11 @@ window.addEventListener('pywebviewready', function () {
             dateInput.style.textAlign = "left";
         }
 
-        // ==========================================
-        // 🎨 ألوان زراير البحث الجديدة 
-        // ==========================================
         let monthBtnBg = "#0d6efd";   
         let monthBtnText = "#ffffff"; 
         
         let yearBtnBg = "#ffc107";    
         let yearBtnText = "#000000";  
-        // ==========================================
-
         let searchDateBtn = document.querySelector("button[onclick='loadReportsByDate()']");
         if (searchDateBtn && !document.getElementById('repMonth')) {
             let advancedSearchDiv = document.createElement('div');
@@ -546,7 +540,6 @@ async function deleteProd(id) {
     if (confirm("Are you sure?") && pyapi) { await pyapi.delete_product(id); loadInventory(); loadProducts(); }
 }
 
-// 🔴 الدالة القديمة للتقارير الثابتة
 async function loadReports() {
     window.lastSearchType = 'standard'; 
     if (!pyapi) return;
@@ -562,7 +555,6 @@ async function loadReports() {
     tb.innerHTML = html;
 }
 
-// 🔴 دوال البحث المخصص (اليوم، الشهر، السنة)
 async function loadReportsByDate() {
     if (!pyapi) return;
     let dateVal = document.getElementById("repDate").value; 
@@ -584,7 +576,6 @@ async function loadReportsByYear() {
     await fetchAndFilterReports(yearVal, 'year');
 }
 
-// 🔴 المحرك الذكي (تم حل مشكلة الـ NaN بجمع العمود رقم 5 اللي فيه الفلوس)
 async function fetchAndFilterReports(searchValue, type) {
     window.lastSearchType = 'custom'; 
     let tb = document.getElementById('repTable');
@@ -620,7 +611,6 @@ async function fetchAndFilterReports(searchValue, type) {
 
     if (filteredSales.length > 0) {
         filteredSales.forEach(s => {
-            // 🔴 تم التعديل: تجميع العمود رقم 5 (TOTAL) مش رقم 4 اللي فيه اسم المدينة
             let rowTotal = parseFloat(s[5]); 
             if (!isNaN(rowTotal)) {
                 calculatedSales += rowTotal;
@@ -634,7 +624,6 @@ async function fetchAndFilterReports(searchValue, type) {
         html = '<tr><td colspan="6" class="text-center fw-bold">لا توجد مبيعات في هذا التاريخ / No sales found</td></tr>';
     }
 
-    // محاولة جلب الأرقام الدقيقة من البايثون
     let finalWholesale = null, finalNet = null, finalSell = calculatedSales;
     try {
         let r = await pyapi.get_reports_by_date(searchValue);
@@ -645,7 +634,6 @@ async function fetchAndFilterReports(searchValue, type) {
         }
     } catch(e){}
 
-    // 🔴 تم إزالة NaN: لو البايثون معرفش يجيب التكلفة والمكسب للتاريخ ده، هيحط خطوط (---) ويعرض المبيعات الدقيقة اللي حسبناها من الجدول
     document.getElementById('sWholesale').innerText = finalWholesale !== null ? finalWholesale.toFixed(2) : "---";
     document.getElementById('sSell').innerText = finalSell.toFixed(2);
     document.getElementById('sNet').innerText = finalNet !== null ? finalNet.toFixed(2) : "---";
@@ -653,11 +641,9 @@ async function fetchAndFilterReports(searchValue, type) {
     tb.innerHTML = html;
 }
 
-// ================================================================
-// 🔴 دالة تصدير الإكسيل (تم حل مشكلة مربع الـ Save As)
-// ================================================================
+
 async function exportReports() {
-    // 1. لو البحث قياسي (اليوم، الشهر، الخ) هيستخدم كود البايثون اللي بيفتحلك مربع Save As العادي
+    
     if (window.lastSearchType === 'standard') {
         if (!pyapi) return;
         let res = await pyapi.export_reports_excel(document.getElementById('repTime').value);
@@ -665,7 +651,6 @@ async function exportReports() {
             alert("تم التصدير بنجاح: " + res.path);
         }
     } 
-    // 2. لو البحث مخصص، هنستخدم تقنية showSaveFilePicker عشان نجبر الويندوز يفتحلك مربع Save As تختار منه المكان!
     else {
         let dateVal = document.getElementById('repDate') ? document.getElementById('repDate').value : 'Report';
         let filename = `Custom_Report_${dateVal}.csv`;
@@ -699,7 +684,6 @@ async function exportReports() {
 
         let csvContent = "\uFEFF" + csv.join("\n");
 
-        // 🔴 هنا السحر: استدعاء مربع حفظ الويندوز الأصلي (Save As)
         try {
             if (window.showSaveFilePicker) {
                 const handle = await window.showSaveFilePicker({
@@ -713,13 +697,11 @@ async function exportReports() {
                 await writable.write(csvContent);
                 await writable.close();
                 alert("تم التصدير بنجاح!");
-                return; // لو نجحت نوقف الدالة هنا
+                return; 
             }
         } catch (err) {
-            if (err.name === 'AbortError') return; // لو إنت قفلت المربع كنسلت الحفظ
-        }
+            if (err.name === 'AbortError') return;         }
 
-        // 🔴 بديل لو المتصفح قديم ومش بيدعم المربع: هينزلها في التنزيلات ويطلعلك تنبيه واضح
         let csvFile = new Blob([csvContent], {type: "text/csv;charset=utf-8;"});
         let downloadLink = document.createElement("a");
         downloadLink.download = filename;
